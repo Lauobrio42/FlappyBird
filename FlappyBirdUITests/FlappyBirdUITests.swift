@@ -1,6 +1,6 @@
 import XCTest
 
-class FlappyCloneUITests: XCTestCase {
+class FlappyBirdUITests: XCTestCase {
 
     override func setUp() {
         super.setUp()

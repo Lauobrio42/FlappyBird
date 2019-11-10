@@ -1,7 +1,7 @@
 import XCTest
-@testable import FlappyClone
+@testable import FlappyBird
 
-class FlappyCloneTests: XCTestCase {
+class FlappyBirdTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
