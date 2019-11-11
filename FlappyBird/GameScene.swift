@@ -5,10 +5,10 @@ struct PhysicsCategory {
 	static let Ghost : UInt32 = 0x1 << 1
 	static let Ground : UInt32 = 0x1 << 2
 	static let Wall : UInt32 = 0x1 << 3
-
+	static let Score : UInt32 = 0x1 << 4
 }
 
-class GameScene: SKScene {
+class GameScene: SKScene, SKPhysicsContactDelegate {
 
 	var Ground = SKSpriteNode()
 	var Ghost = SKSpriteNode()
@@ -19,8 +19,30 @@ class GameScene: SKScene {
 
 	var gameStart = Bool()
 
-	override func didMoveToView(view: SKView) {
-		/* Setup scene here */
+	var score = Int()
+	let scoreLbl = SKLabelNode()
+
+	var died = Bool()
+	var restartBTN = SKSpriteNode()
+
+	func restartScene()
+	{
+		self.removeAllChildren()
+		self.removeAllActions()
+		died = false
+		gameStarted = false
+		score = 0
+		createScene()
+	}
+
+	func createScene()
+	{
+		self.physicsWorld.contactDelegate = self
+
+		scoreLbl.position = CGPoint(x: self.frame.width / 2, y: self.frame.height / 2 + self.frame.height / 2.5)
+		scoreLbl.text = "\(score)"
+		scoreLbl.zPosition = 5
+		self.addChild(scoreLbl)
 
 		Ground = SKSpriteNode(imageNamed: "Ground")
 		Ground.setScale(0.5)
@@ -44,14 +66,43 @@ class GameScene: SKScene {
 		Ghost.physicsBody = SKPhysicsBody(circleOfRadius: Ghost.frame.height / 2)
 		Ghost.physicsBody?.categoryBitMask = PhysicsCategory.Ghost
 		Ghost.physicsBody?.collisionBitMask = PhysicsCategory.Ground | PhysicsCategory.Wall
-		Ghost.physicsBody?.contactTestBitMask = PhysicsCategory.Ground | PhysicsCategory.Wall
+		Ghost.physicsBody?.contactTestBitMask = PhysicsCategory.Ground | PhysicsCategory.Wall | PhysicsCategory.Score
 		Ghost.physicsBody?.affectedByGravity = false
 		Ghost.physicsBody?.dynamic = true
 
 		Ghost.zPosition = 2
 
 		self.addChild(Ghost)
+	}
 
+	override func didMoveToView(view: SKView) {
+		/* Setup scene here */
+
+		createScene()
+	}
+
+	func createBTN() {
+		restartBTN = SKSpriteNode(color: SKColor?blueColor(), size: CGSize(width: 200, height: 100))
+		restartBTN.position = CGPoint(x: self.frame.width / 2, y: self.frame.height / 2)
+		restartBTN.zPosition = 6
+		self.addChild(restartBTN)
+	}
+
+	func didBeginContact(contact: SKPhysicsContact)
+	{
+		let firstBody = contact.BodyA
+		let secondBody = contact.bodyB
+
+		if firstBody.categoryBitMask == PhysicsCategory.Score && secondBody.categoryBitMask == PhysicsCategory.Ghost || firstBody.categoryBitMask == PhysicsCategory.Ghost && secondBody.categoryBitMask == PhysicsCategory.Score {
+			score++
+			scoreLbl.text = "\(score)"
+		}
+
+		if firstBody.categoryBitMask == PhysicsCategory.Ghost && secondBody.categoryBitMask == PhysicsCategory.Wall || firstBody.categoryBitMask == PhysicsCategory.Wall && secondBody.categoryBitMask == PhysicsCategory.Ghost
+		{
+			died = true
+			createBTN()
+		}
 	}
 
 	override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
@@ -80,12 +131,38 @@ class GameScene: SKScene {
 			Ghost.physicsBody?.velocity = CGVectorMake(0, 0)
 			Ghost.physicsBody?.applyImpulse(CGVectorMake(0, 90))
 		} else {
-			Ghost.physicsBody?.velocity = CGVectorMake(0, 0)
-			Ghost.physicsBody?.applyImpulse(CGVectorMake(0, 90))
+			if died == true {
+
+			} else {
+				Ghost.physicsBody?.velocity = CGVectorMake(0, 0)
+				Ghost.physicsBody?.applyImpulse(CGVectorMake(0, 90))
+			}
+		}
+
+		for touch in touches{
+			let location = touch.locationInNode(self)
+
+			if died == true {
+				if restartBTN.containsPoint(location) {
+				restartScene
+				}
+			}
 		}
 	}
 
 	func createWalls() {
+
+		let scoreNode = SKPriteNode()
+
+		scoreNode.size = CGSize(width: 1, height: 200)
+		scoreNode.position = CGPoint(x: self.frame.width, y: self.frame.height / 2)
+		scoreNode.physicsBody = SKPhysicsBody(rectangleOfSize: scoreNode.size)
+		scoreNode.physicsBody?.affectedByGravity = false
+		scoreNode.physicsBody?.dynamic = false
+		scoreNode.physicsBody?.categoryBitMask = PhysicsCategory.Score
+		scoreNode.physicsBody?.collisionBitMask = 0
+		scoreNode.physicsBody?.contactTestBitMask = PhysicsCategory.Ghost
+		scoreNode.color = SKColor.blueColor()
 
 		let wallPair = SKNode()
 
@@ -121,6 +198,7 @@ class GameScene: SKScene {
 
 		var randomPosition = CGFloat.random(min: -200, max: 200)
 		wallPair.position.y = wallPair.y + randomPosition
+		wallPair.addChild(scoreNode)
 
 		wallPair.runAction(moveAndRemove)
 
