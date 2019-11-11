@@ -41,7 +41,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
 		scoreLbl.position = CGPoint(x: self.frame.width / 2, y: self.frame.height / 2 + self.frame.height / 2.5)
 		scoreLbl.text = "\(score)"
+		scoreLbl.fontName = "04b_19"
 		scoreLbl.zPosition = 5
+		scoreLbl.fontsize = 60
 		self.addChild(scoreLbl)
 
 		Ground = SKSpriteNode(imageNamed: "Ground")
@@ -85,7 +87,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 		restartBTN = SKSpriteNode(color: SKColor?blueColor(), size: CGSize(width: 200, height: 100))
 		restartBTN.position = CGPoint(x: self.frame.width / 2, y: self.frame.height / 2)
 		restartBTN.zPosition = 6
+		restartBTN.setScale(0)
 		self.addChild(restartBTN)
+
+		restartBTN.runAction(SKAction.scaleTo(1.0, duration: 0.3))
 	}
 
 	func didBeginContact(contact: SKPhysicsContact)
@@ -101,6 +106,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 		if firstBody.categoryBitMask == PhysicsCategory.Ghost && secondBody.categoryBitMask == PhysicsCategory.Wall || firstBody.categoryBitMask == PhysicsCategory.Wall && secondBody.categoryBitMask == PhysicsCategory.Ghost
 		{
 			died = true
+
+			enumerationChildNodesWithName("wallPair", usingBlocks: ({
+				(node, error) in
+
+				node.speed = 0
+				self.removeAllActions()
+			}))
 			createBTN()
 		}
 	}
@@ -164,7 +176,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 		scoreNode.physicsBody?.contactTestBitMask = PhysicsCategory.Ghost
 		scoreNode.color = SKColor.blueColor()
 
-		let wallPair = SKNode()
+		wallPair = SKNode()
+		wallPairName = "wallPair"
 
 		let topWall = SKSpriteNode(imageNamed: "Wall")
 		let bottomWall = SKSpriteNode(imageNamed: "Wall")
